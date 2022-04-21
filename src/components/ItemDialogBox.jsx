@@ -16,11 +16,12 @@ import Zoom from '@mui/material/Zoom';
 import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
 import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import { db } from '../firebase';
-import { onSnapshot, collection, getDocs, getDoc, where, query } from '@firebase/firestore'
+import { onSnapshot, collection, getDocs, getDoc, where, doc, query, updateDoc, arrayUnion } from '@firebase/firestore'
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
 
-export default function ItemDialogBox({ open, onClose}) {
+export default function ItemDialogBox({ open, onClose, feedback }) {
 	const context = useContext(SweeatsContext)
 	const [view, setView] = useState(0)
 	const [items, setItems] = useState([])
@@ -28,22 +29,44 @@ export default function ItemDialogBox({ open, onClose}) {
 	const [newItemPrice, setNewItemPrice] = useState("")
 	const [requestItemItemName, setRequestItemItemName] = useState("")
 	const [requestItemDesc, setRequestItemDesc] = useState("")
+	const [loading, setLoading] = useState(false)
 	useEffect(()=>{
 		async function getData(){
 			try{
-				const queryQ=query(collection(db, 'items'))
-				const docSnap= await getDocs(queryQ)
-				const array = docSnap.docs.map(doc=>doc.data().name)
+				const docSnap= await getDocs(collection(db, 'sweets'))
+				console.log("[ItemDialogBox] getData", docSnap.docs.length)
+				const array = docSnap.docs.map(doc=>{return {ref:doc.id, name:doc.data().Name}})
 				console.log("[ItemDialogBox] array", array)
 				setItems(array)
 			} catch (err) {
 				console.log("[ItemDialogBox] error", err)
 			}
 		}
-	}, [])
-	//...items.map(i=>i.Name)
-	const addItem=(e)=>{
-
+		if(open){getData()}
+	}, [db])
+	const addItem=async(e)=>{
+		setLoading(true)
+		console.log("[ItemDialogBox] addItem in")
+		try {
+			await updateDoc(doc(db, 'stores', context.data.store_fid), {
+				items: arrayUnion({
+					price: newItemPrice,
+					rating:0,
+					ref: doc(db, 'sweets', items.filter((i)=>i.name===newItemItemName)[0].ref),
+				})
+			})
+			setTimeout(function(){
+				setLoading(false)
+				onClose()
+				feedback(["success","Item successfully added."])
+			}, 1000);
+			console.log("[ItemDialogBox] addItem", items.filter((i)=>i.name===newItemItemName)[0].ref)
+		} catch (err) {
+			setLoading(false)
+			onClose()
+			feedback(["error","Failed to insert item."])
+			console.log("[ItemDialogBox] addItem error", err)
+		}
 	}
 	const requestItemSubmit=(e)=>{
 		e.preventDefault()
@@ -65,7 +88,7 @@ export default function ItemDialogBox({ open, onClose}) {
 							<Autocomplete
 								disablePortal
 								id="combo-box-demo"
-								options={["ss"]}
+								options={[...items.map(i=>i.name)]}
 								sx={{ width: 300 }}
 								onChange={(e, v)=>setNewItemItemName(v)}
 								renderInput={
@@ -73,7 +96,6 @@ export default function ItemDialogBox({ open, onClose}) {
 											margin="dense"
 											id="name"
 											type="text"
-											
 											fullWidth
 											value={newItemItemName}
 											validators={['required']}
@@ -102,7 +124,10 @@ export default function ItemDialogBox({ open, onClose}) {
 						</div>
 						<div>
 							<Button onClick={onClose}>Cancel</Button>
-							<Button type="submit">Add</Button>
+							{ !loading ? 
+								<Button type="submit">Add</Button> :
+								<Button disabled><CircularProgress size="1rem" color="secondary" /></Button>
+							}
 						</div>
 					</DialogActions>
 				</ValidatorForm>

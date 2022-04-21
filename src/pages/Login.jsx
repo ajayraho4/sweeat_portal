@@ -20,6 +20,7 @@ export default function Login() {
 				const docSnap= await getDocs(queryQ)
 				if(docSnap.docs.length===1){
 					context.data = {
+						'store_fid': docSnap.docs[0].id,
 						'store_id': docSnap.docs[0].data().store_id,
 						'store_code': docSnap.docs[0].data().store_code,
 						'location': docSnap.docs[0].data().location,

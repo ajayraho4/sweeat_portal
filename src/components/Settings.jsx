@@ -45,7 +45,7 @@ export default function Settings() {
 			<Typography color="inherit" variant="h6" id="tableTitle" component="h1">
 				Settings
 			</Typography>
-			<Box component="div" className="flex flex-col space-y-6 px-5 py-5" style={{ width: "120%"}}>
+			<Box component="div" className="flex flex-col space-y-6 px-5 py-5" style={{ width: "100%"}}>
 				<div className="flex w-full justify-between space-x-2">
 					<TextField className="w-full" onChange={(e)=>{setStoreName(e.target.value)}} value={storeName} defaultValue={context.data.name} label="Store Name" />
 					<TextField className="w-full" onChange={(e)=>{setStoreAdminEmail(e.target.value)}} defaultValue={context.data.adminEmail} type="email" label="Store Admin Email" />
@@ -62,7 +62,7 @@ export default function Settings() {
 					<Button variant="outlined" onClick={handleClickOpenPw}>Change Password</Button>
 					<Tooltip title="Change tabs to discard changes"><Button variant="outlined" disabled={!editing}>Save Changes</Button></Tooltip>
 				</div>
-				<div className="flex w-full justify-end space-x-2 p-4 bg-red-300/[0.3] rounded-lg">
+				<div className="flex w-full justify-end space-x-2 p-4 border-2 border-red-300/[0.3] rounded-lg">
 					<Button className="w-64" onClick={handleClickOpenSus} variant="contained" color="error"> Suspend Service Temporarily</Button>
 					<Button className="w-64" onClick={handleClickOpenRDel} variant="contained" color="error">Request account deletion</Button>
 					<Button variant="contained" color="error">Logout</Button>

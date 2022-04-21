@@ -11,26 +11,45 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Grow from '@mui/material/Grow';
 import CircularProgress from '@mui/material/CircularProgress';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import { db } from '../firebase';
 import { onSnapshot, collection, getDocs, getDoc, where, query } from '@firebase/firestore'
+import Snackbar from '@mui/material/Snackbar';
+import SnackbarContent from '@mui/material/SnackbarContent';
 import ItemDialogBox from './ItemDialogBox'
 export default function Items() {
 	const context = useContext(SweeatsContext)
 	const [open, setOpen] = useState(false);
+	const [openSnackbar, setOpenSnackbar] = useState(false);
+	const [snackbarText, setSnackbarText] = useState([]);
 	const [openItemEDialog, setOpenItemEDialog] = useState(false);
 	const [openItemDDialog, setOpenItemDDialog] = useState(false);
 	const [search, setSearch] = useState("")
 	const [items, setItems] = useState([])
 	const [filteredData, setFilteredData] = useState([])
 	const [loading, setLoading] = useState(true)
-  const handleClickOpen=()=>{setOpen(true)};
-  const handleClose=()=>{setOpen(false)};
-  const handleOpenItemEDialog=()=>{setOpenItemEDialog(true)};
-  const handleCloseItemEDialog=()=>{setOpenItemEDialog(false)};
-  const handleOpenItemDDialog=()=>{setOpenItemDDialog(true)};
-  const handleCloseItemDDialog=()=>{setOpenItemDDialog(false)};
-  
+	const handleClickOpen=()=>{setOpen(true)};
+	const handleClose=()=>{setOpen(false)};
+	const showSnackbar=(msg)=>{
+		setSnackbarText(msg)
+		setOpenSnackbar(true)
+	};
+	const handleSnackbarClose=()=>{setOpenSnackbar(false)};
+	const handleOpenItemEDialog=()=>{setOpenItemEDialog(true)};
+	const handleCloseItemEDialog=()=>{setOpenItemEDialog(false)};
+	const handleOpenItemDDialog=()=>{setOpenItemDDialog(true)};
+	const handleCloseItemDDialog=()=>{setOpenItemDDialog(false)};
+	const snackbarAction = (
+		<IconButton
+			size="small"
+			aria-label="close"
+			color="inherit"
+			onClick={handleSnackbarClose}
+		>
+			<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+		</IconButton>
+	);
 	useEffect(()=>{
 		async function getData(){
 			return onSnapshot(query(collection(db, 'stores'), where("store_id", "==", context.data.store_id)),
@@ -94,22 +113,25 @@ export default function Items() {
 				<div className="ml-5 mt-5 grid grid-cols-1 md:grid-cols-2 p-0 gap-8 gap-x-6">
 				{
 					filteredData.map(item=>(
-						<ItemCard name={item.Name} price={item.price} rating={item.rating} image={item.imageURL||"/dish.jpg"} editButtonHandler={handleOpenItemEDialog} deleteButtonHandler={handleOpenItemDDialog}/>
+						<ItemCard id={item.id} name={item.Name} price={item.price} rating={item.rating} image={item.imageURL||"/dish.jpg"} editButtonHandler={handleOpenItemEDialog} deleteButtonHandler={(o)=>handleOpenItemDDialog(o)}/>
 					))
 				}
 				</div>
 			}
 		</div> :
 		<Box className="flex justify-center items-center py-32 p-10" sx={{width:"600%"}}>
-		<CircularProgress color="secondary" />
+			<CircularProgress color="secondary" />
 		</Box>
 		}
-		<ItemDialogBox open={open} onClose={handleClose} />
+		<ItemDialogBox feedback={showSnackbar} open={open} onClose={handleClose} />
 		<ConfirmationDialog open={openItemDDialog} onClose={handleCloseItemDDialog} />
+		<Snackbar  autoHideDuration={5000} open={openSnackbar} onClose={handleSnackbarClose}>
+			<Alert onClose={handleClose} severity={snackbarText[0]} sx={{ width: '100%' }}>{snackbarText[1]}</Alert>
+		</Snackbar>
 		</>
 	);
 }
-
+///NOTE____use auxiliary states to pass info
 export const ConfirmationDialog=({open, onClose})=>{
 	return(
 		<Dialog fullWidth open={open} onClose={onClose}>
