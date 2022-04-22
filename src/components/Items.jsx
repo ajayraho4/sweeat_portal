@@ -11,45 +11,35 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Grow from '@mui/material/Grow';
 import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import { db } from '../firebase';
 import { onSnapshot, collection, getDocs, getDoc, where, query } from '@firebase/firestore'
-import Snackbar from '@mui/material/Snackbar';
-import SnackbarContent from '@mui/material/SnackbarContent';
 import ItemDialogBox from './ItemDialogBox'
-export default function Items() {
+import { ValidatorForm } from 'react-material-ui-form-validator';
+import UILDButton from './UILDButton'
+export default function Items({showSnackbar}) {
 	const context = useContext(SweeatsContext)
 	const [open, setOpen] = useState(false);
-	const [openSnackbar, setOpenSnackbar] = useState(false);
-	const [snackbarText, setSnackbarText] = useState([]);
-	const [openItemEDialog, setOpenItemEDialog] = useState(false);
-	const [openItemDDialog, setOpenItemDDialog] = useState(false);
+	const [openItemEDialog, setOpenItemEDialog] = useState([false,{}]);
+	const [openItemDDialog, setOpenItemDDialog] = useState([false,{}]);
 	const [search, setSearch] = useState("")
 	const [items, setItems] = useState([])
 	const [filteredData, setFilteredData] = useState([])
 	const [loading, setLoading] = useState(true)
 	const handleClickOpen=()=>{setOpen(true)};
 	const handleClose=()=>{setOpen(false)};
-	const showSnackbar=(msg)=>{
-		setSnackbarText(msg)
-		setOpenSnackbar(true)
+	const handleOpenItemEDialog=(item)=>{
+		console.log("[handleOpenItemEDialog] item",item)
+		setOpenItemEDialog([true, item])
 	};
-	const handleSnackbarClose=()=>{setOpenSnackbar(false)};
-	const handleOpenItemEDialog=()=>{setOpenItemEDialog(true)};
-	const handleCloseItemEDialog=()=>{setOpenItemEDialog(false)};
-	const handleOpenItemDDialog=()=>{setOpenItemDDialog(true)};
-	const handleCloseItemDDialog=()=>{setOpenItemDDialog(false)};
-	const snackbarAction = (
-		<IconButton
-			size="small"
-			aria-label="close"
-			color="inherit"
-			onClick={handleSnackbarClose}
-		>
-			<svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 0 24 24" width="20"><path d="M0 0h24v24H0z" fill="none"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-		</IconButton>
-	);
+	const handleCloseItemEDialog=()=>{setOpenItemEDialog([false,{}])};
+	const handleOpenItemDDialog=(item)=>{
+		setOpenItemDDialog([true, item])
+	};
+	const handleCloseItemDDialog=()=>{setOpenItemDDialog([false,{}])};
+
 	useEffect(()=>{
 		async function getData(){
 			return onSnapshot(query(collection(db, 'stores'), where("store_id", "==", context.data.store_id)),
@@ -113,7 +103,9 @@ export default function Items() {
 				<div className="ml-5 mt-5 grid grid-cols-1 md:grid-cols-2 p-0 gap-8 gap-x-6">
 				{
 					filteredData.map(item=>(
-						<ItemCard id={item.id} name={item.Name} price={item.price} rating={item.rating} image={item.imageURL||"/dish.jpg"} editButtonHandler={handleOpenItemEDialog} deleteButtonHandler={(o)=>handleOpenItemDDialog(o)}/>
+						<ItemCard id={item.id} name={item.Name} price={item.price} rating={item.rating} image={item.imageURL||"/dish.jpg"}
+							editButtonHandler={handleOpenItemEDialog}
+							deleteButtonHandler={handleOpenItemDDialog}/>
 					))
 				}
 				</div>
@@ -124,27 +116,74 @@ export default function Items() {
 		</Box>
 		}
 		<ItemDialogBox feedback={showSnackbar} open={open} onClose={handleClose} />
-		<ConfirmationDialog open={openItemDDialog} onClose={handleCloseItemDDialog} />
-		<Snackbar  autoHideDuration={5000} open={openSnackbar} onClose={handleSnackbarClose}>
-			<Alert onClose={handleClose} severity={snackbarText[0]} sx={{ width: '100%' }}>{snackbarText[1]}</Alert>
-		</Snackbar>
+		<ConfirmationDialog feedback={showSnackbar} open={openItemDDialog[0]} onClose={handleCloseItemDDialog} item={openItemDDialog[1]} />
+		<EditDialog feedback={showSnackbar} open={openItemEDialog[0]} onClose={handleCloseItemEDialog} item={openItemEDialog[1]} />
 		</>
 	);
 }
-///NOTE____use auxiliary states to pass info
-export const ConfirmationDialog=({open, onClose})=>{
+export const ConfirmationDialog=({open, onClose, item, feedback})=>{
+	const [loading, setLoading] = useState(false)
 	return(
 		<Dialog fullWidth open={open} onClose={onClose}>
 			<Grow in={open}>
 			<Box>
 				<DialogTitle className="font-bold">Delete Item</DialogTitle>
 				<DialogContent>
-					Delete <b>item</b> from items menu? This cannot be undone.
+					Delete <b>{item.name}</b> from items menu? This cannot be undone.
 				</DialogContent>
 				<DialogActions className="flex items-center mt-10 space-x-2">
 					<Button onClick={onClose}>Cancel</Button>
-					<Button type="submit" color="error" variant="contained">Yes</Button>
+					<UILDButton
+						type="submit"
+						loading={loading}
+						text="Yes"
+						color="error" variant="contained"
+						onClick={()=>{
+							setLoading(true)
+							feedback(["success","Item deleted successfully"])
+							setTimeout(onClose,1000)
+						}}/>
 				</DialogActions>
+			</Box>
+			</Grow>
+		</Dialog>
+	)
+}
+export const EditDialog=({open, onClose, item, feedback})=>{
+	const [itemPrice, setItemPrice] = useState(item.price)
+	const [loading, setLoading] = useState(false)
+	console.log("[EditDialog] itemPrice ", item.price, itemPrice)
+	return(
+		<Dialog fullWidth open={open} onClose={onClose}>
+			<Grow in={open}>
+			<Box>
+				<ValidatorForm>
+					<DialogTitle className="font-bold">Edit Item</DialogTitle>
+					<DialogContent>
+						<div className="flex flex-col pt-3 space-y-4">
+							<TextField disabled value={item.name} label="Item Name" type="text" />
+							<TextField value={item.price} defaultValue={item.price} required label="Item Price" type="number" />
+							<Tooltip title="Coming Soon..." className="w-48 cursor-pointer">
+								<Box>
+								<Button variant="outlined" className="w-48" disabled>Change item image</Button>
+								</Box>
+							</Tooltip>
+						</div>
+					</DialogContent>
+					<DialogActions className="flex items-center mt-10 space-x-2">
+						<Button onClick={onClose}>Cancel</Button>
+						<UILDButton
+						type="submit"
+						loading={loading}
+						text="Update Item"
+						color="error" variant="contained"
+						onClick={()=>{
+							setLoading(true)
+							feedback(["success","Item updated successfully"])
+							setTimeout(onClose,1000)
+						}}/>
+					</DialogActions>
+				</ValidatorForm>
 			</Box>
 			</Grow>
 		</Dialog>

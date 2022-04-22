@@ -16,7 +16,7 @@ import Zoom from '@mui/material/Zoom';
 import Tooltip from '@mui/material/Tooltip';
 import Grow from '@mui/material/Grow';
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
+import UILDButton from './UILDButton'
 import { db } from '../firebase';
 import { onSnapshot, collection, getDocs, getDoc, where, doc, query, updateDoc, arrayUnion } from '@firebase/firestore'
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
@@ -42,8 +42,9 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 				console.log("[ItemDialogBox] error", err)
 			}
 		}
-		if(open){getData()}
-	}, [db])
+		console.log("[ItemDialogBox] open ", open)
+		if(open===true){getData()}
+	}, [open])
 	const addItem=async(e)=>{
 		setLoading(true)
 		console.log("[ItemDialogBox] addItem in")
@@ -52,6 +53,7 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 				items: arrayUnion({
 					price: newItemPrice,
 					rating:0,
+					available:true,
 					ref: doc(db, 'sweets', items.filter((i)=>i.name===newItemItemName)[0].ref),
 				})
 			})
@@ -124,10 +126,7 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 						</div>
 						<div>
 							<Button onClick={onClose}>Cancel</Button>
-							{ !loading ? 
-								<Button type="submit">Add</Button> :
-								<Button disabled><CircularProgress size="1rem" color="secondary" /></Button>
-							}
+							<UILDButton loading={loading} text="Add" />
 						</div>
 					</DialogActions>
 				</ValidatorForm>
