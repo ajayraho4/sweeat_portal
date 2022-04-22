@@ -5,7 +5,6 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -13,12 +12,14 @@ import Grow from '@mui/material/Grow';
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
+import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import { db } from '../firebase';
-import { onSnapshot, collection, getDocs, getDoc, where, query } from '@firebase/firestore'
+import { onSnapshot, collection, getDocs, getDoc, where, query, updateDoc, doc, arrayRemove, arrayUnion } from '@firebase/firestore'
 import ItemDialogBox from './ItemDialogBox'
 import { ValidatorForm } from 'react-material-ui-form-validator';
 import UILDButton from './UILDButton'
+
 export default function Items({showSnackbar}) {
 	const context = useContext(SweeatsContext)
 	const [open, setOpen] = useState(false);
@@ -31,7 +32,6 @@ export default function Items({showSnackbar}) {
 	const handleClickOpen=()=>{setOpen(true)};
 	const handleClose=()=>{setOpen(false)};
 	const handleOpenItemEDialog=(item)=>{
-		console.log("[handleOpenItemEDialog] item",item)
 		setOpenItemEDialog([true, item])
 	};
 	const handleCloseItemEDialog=()=>{setOpenItemEDialog([false,{}])};
@@ -48,7 +48,7 @@ export default function Items({showSnackbar}) {
 					const itemsDataArr=[]
 					for(let i=0; i<itemsArr.length; i++){
 						const docSnap= await getDoc(itemsArr[i].ref)
-						itemsDataArr.push({...docSnap.data(), price:itemsArr[i].price, rating:itemsArr[i].rating})
+						itemsDataArr.push({...docSnap.data(), price:itemsArr[i].price, rating:itemsArr[i].rating, available:itemsArr[i].available})
 					}
 					setItems(itemsDataArr)
 					setFilteredData(itemsDataArr)
@@ -104,6 +104,7 @@ export default function Items({showSnackbar}) {
 				{
 					filteredData.map(item=>(
 						<ItemCard id={item.id} name={item.Name} price={item.price} rating={item.rating} image={item.imageURL||"/dish.jpg"}
+						available={item.available}
 							editButtonHandler={handleOpenItemEDialog}
 							deleteButtonHandler={handleOpenItemDDialog}/>
 					))
@@ -122,7 +123,33 @@ export default function Items({showSnackbar}) {
 	);
 }
 export const ConfirmationDialog=({open, onClose, item, feedback})=>{
+	const context = useContext(SweeatsContext)
 	const [loading, setLoading] = useState(false)
+	const GetItemReference=async(name)=>{
+		const docSnap= await getDocs(collection(db, 'sweets'))
+		const items = docSnap.docs.map(doc=>{return {ref:doc.id, name:doc.data().Name}})
+		return items.filter((i)=>i.name===name)[0].ref
+	}
+	const deleteItem=async()=>{
+		setLoading(true)
+		try {
+			const itemRef = await GetItemReference(item.name)
+			await updateDoc(doc(db, 'stores', context.data.store_fid), {
+				items: arrayRemove({
+					price: item.price,
+					rating:item.rating,
+					available:item.available,
+					ref: doc(db, 'sweets', itemRef)
+				})
+			})
+			feedback(["success","Item deleted successfully."])
+			setTimeout(()=>{setLoading(false);onClose()},1000)
+		} catch (error) {
+			console.log("[Items] updateItem ", error)
+			feedback(["error","Item deletion failed."])
+			setTimeout(()=>{setLoading(false);onClose()},1000)
+		}
+	}
 	return(
 		<Dialog fullWidth open={open} onClose={onClose}>
 			<Grow in={open}>
@@ -138,11 +165,7 @@ export const ConfirmationDialog=({open, onClose, item, feedback})=>{
 						loading={loading}
 						text="Yes"
 						color="error" variant="contained"
-						onClick={()=>{
-							setLoading(true)
-							feedback(["success","Item deleted successfully"])
-							setTimeout(onClose,1000)
-						}}/>
+						onClick={deleteItem}/>
 				</DialogActions>
 			</Box>
 			</Grow>
@@ -150,9 +173,47 @@ export const ConfirmationDialog=({open, onClose, item, feedback})=>{
 	)
 }
 export const EditDialog=({open, onClose, item, feedback})=>{
-	const [itemPrice, setItemPrice] = useState(item.price)
+	const context = useContext(SweeatsContext)
+	const [itemPrice, setItemPrice] = useState(0)
 	const [loading, setLoading] = useState(false)
-	console.log("[EditDialog] itemPrice ", item.price, itemPrice)
+  const [itemAvailable, setItemAvailable] = useState(true)
+	useEffect(()=>{
+		setItemPrice(item.price)
+		setItemAvailable(item.available)
+	},[open])
+	const GetItemReference=async(name)=>{
+		const docSnap= await getDocs(collection(db, 'sweets'))
+		const items = docSnap.docs.map(doc=>{return {ref:doc.id, name:doc.data().Name}})
+		return items.filter((i)=>i.name===name)[0].ref
+	}
+	const updateItem=async()=>{
+		setLoading(true)
+		try {
+			const itemRef = await GetItemReference(item.name)
+			await updateDoc(doc(db, 'stores', context.data.store_fid), {
+				items: arrayRemove({
+					price: item.price,
+					rating:item.rating,
+					available:item.available,
+					ref: doc(db, 'sweets', itemRef)
+				})
+			})
+			await updateDoc(doc(db, 'stores', context.data.store_fid), {
+				items: arrayUnion({
+					price: itemPrice,
+					rating:item.rating,
+					available:itemAvailable,
+					ref: doc(db, 'sweets', itemRef)
+				})
+			})
+			feedback(["success","Item updated successfully."])
+			setTimeout(()=>{setLoading(false);onClose()},1000)
+		} catch (error) {
+			console.log("[Items] updateItem ", error)
+			feedback(["error","Item updation failed."])
+			setTimeout(()=>{setLoading(false);onClose()},1000)
+		}
+	}
 	return(
 		<Dialog fullWidth open={open} onClose={onClose}>
 			<Grow in={open}>
@@ -162,12 +223,19 @@ export const EditDialog=({open, onClose, item, feedback})=>{
 					<DialogContent>
 						<div className="flex flex-col pt-3 space-y-4">
 							<TextField disabled value={item.name} label="Item Name" type="text" />
-							<TextField value={item.price} defaultValue={item.price} required label="Item Price" type="number" />
-							<Tooltip title="Coming Soon..." className="w-48 cursor-pointer">
-								<Box>
-								<Button variant="outlined" className="w-48" disabled>Change item image</Button>
-								</Box>
-							</Tooltip>
+							<TextField value={itemPrice} defaultValue={itemPrice} required label="Item Price" onChange={(e)=>setItemPrice(e.target.value)} type="number" />
+							<div className="flex space-x-8">
+								<div>
+									<Tooltip title="Unchecking this would mark item out of stock and will not be shown in search results for your store.">
+										<Switch checked={itemAvailable} onChange={(e)=>{setItemAvailable(e.target.checked)}} color="warning" />
+									</Tooltip> Available
+								</div>
+								<Tooltip title="Coming Soon..." className="w-48 cursor-pointer">
+									<Box>
+										<Button variant="outlined" className="w-48" disabled>Change item image</Button>
+									</Box>
+								</Tooltip>
+							</div>
 						</div>
 					</DialogContent>
 					<DialogActions className="flex items-center mt-10 space-x-2">
@@ -176,12 +244,7 @@ export const EditDialog=({open, onClose, item, feedback})=>{
 						type="submit"
 						loading={loading}
 						text="Update Item"
-						color="error" variant="contained"
-						onClick={()=>{
-							setLoading(true)
-							feedback(["success","Item updated successfully"])
-							setTimeout(onClose,1000)
-						}}/>
+						onClick={updateItem}/>
 					</DialogActions>
 				</ValidatorForm>
 			</Box>

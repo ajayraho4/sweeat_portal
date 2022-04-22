@@ -1,9 +1,6 @@
 import { useEffect, useState, useContext } from 'react';
 import { SweeatsContext } from '../components/Context'
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -18,7 +15,7 @@ import Grow from '@mui/material/Grow';
 import Box from '@mui/material/Box';
 import UILDButton from './UILDButton'
 import { db } from '../firebase';
-import { onSnapshot, collection, getDocs, getDoc, where, doc, query, updateDoc, arrayUnion } from '@firebase/firestore'
+import { collection, getDocs, doc, updateDoc, arrayUnion } from '@firebase/firestore'
 import { ValidatorForm, TextValidator} from 'react-material-ui-form-validator';
 
 export default function ItemDialogBox({ open, onClose, feedback }) {
@@ -34,20 +31,16 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 		async function getData(){
 			try{
 				const docSnap= await getDocs(collection(db, 'sweets'))
-				console.log("[ItemDialogBox] getData", docSnap.docs.length)
 				const array = docSnap.docs.map(doc=>{return {ref:doc.id, name:doc.data().Name}})
-				console.log("[ItemDialogBox] array", array)
 				setItems(array)
 			} catch (err) {
 				console.log("[ItemDialogBox] error", err)
 			}
 		}
-		console.log("[ItemDialogBox] open ", open)
 		if(open===true){getData()}
 	}, [open])
 	const addItem=async(e)=>{
 		setLoading(true)
-		console.log("[ItemDialogBox] addItem in")
 		try {
 			await updateDoc(doc(db, 'stores', context.data.store_fid), {
 				items: arrayUnion({
@@ -62,7 +55,6 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 				onClose()
 				feedback(["success","Item successfully added."])
 			}, 1000);
-			console.log("[ItemDialogBox] addItem", items.filter((i)=>i.name===newItemItemName)[0].ref)
 		} catch (err) {
 			setLoading(false)
 			onClose()
@@ -72,7 +64,6 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 	}
 	const requestItemSubmit=(e)=>{
 		e.preventDefault()
-		console.log("[requestItem] invoked")
 	}
 	return (
 		<Dialog fullWidth open={open} onClose={onClose}>
@@ -116,6 +107,7 @@ export default function ItemDialogBox({ open, onClose, feedback }) {
 							<Tooltip title="Coming soon...">
 								<FormControlLabel sx={{fontSize:"0.2em"}} control={<Checkbox defaultChecked disabled />} label="Use default image for item" />
 							</Tooltip>
+							<p className="text-gray-400 text-sm">Item is marked available (in stock) by default. Edit item to make changes.</p>
 						</div>
 					</DialogContent>
 					<DialogActions className="flex items-center mt-20">
