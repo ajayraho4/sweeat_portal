@@ -9,6 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function Signup() {
   const [storeName, setStoreName] = useState("");
@@ -17,6 +18,7 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [open, setOpen] = useState(false);
   const [alertText, setAlertText] = useState("")
+	const [loading, setLoading] = useState(false);
 
   const handleClickOpen = (msg) => {
   	setAlertText(msg)
@@ -34,8 +36,10 @@ export default function Signup() {
 		}
 	})
   const navigate = useNavigate()
-  const handleSubmit = async(e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
+		setLoading(true)
+
     function randomString() {
     	const length=16
     	const chars="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -43,27 +47,37 @@ export default function Signup() {
 		  for (var i = length; i > 0; --i) result += chars[Math.floor(Math.random() * chars.length)];
 	    return result;
 		}
-    try{
-    	await addDoc(collection(db, "stores"), {
-			  adminEmail:email,
-			  delivery:false,
-			  discount:0,
-			  items:[],
-			  location: new GeoPoint(0,0),
-			  name:storeName,
-			  store_id: randomString(),
-			  rating:0,
-			  tagline:"Sweet Store",
-			  password:password
-			});
-			handleClickOpen("Registration successful. You will be redirected to login page.")
-			setTimeout(()=>{
-				navigate('/')
-		  },2000) 
-    } catch(error) {
-			handleClickOpen("Registration failed.")
-    	console.log("[Signup] error", error)
-    }
+		async function register(){
+			try{
+	    	await addDoc(collection(db, "stores"), {
+				  adminEmail:email,
+				  delivery:false,
+				  discount:0,
+				  items:[],
+				  location: new GeoPoint(0,0),
+				  name:storeName,
+				  store_id: randomString(),
+				  rating:0,
+				  tagline:"Sweet Store",
+				  password:password
+				});
+				handleClickOpen("Registration successful. You will be redirected to login page.")
+				setTimeout(()=>{
+					navigate('/')
+			  },2000) 
+	    } catch(error) {
+				handleClickOpen("Registration failed.")
+	    	console.log("[Signup] error", error)
+	    }
+		}
+    
+    if(storeName===""||password===""||address===""||email===""||!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)){
+    	handleClickOpen("Please fill the required fields properly.")
+    	console.log("[Signup] email", email)
+    	setLoading(false)
+    } else {
+			register()
+		}
     
   }
   return (
@@ -75,7 +89,7 @@ export default function Signup() {
       <section className='flex flex-col justify-center items-center w-full -mt-2'>
 				<h2 className='text-3xl font-bold'>Register</h2>
 				<div className='flex justify-center rounded-lg border py-8 w-3/6 mt-5 drop-shadow-md bg-white'>
-					<form className='flex flex-col justify-center items-center space-y-3 w-full' onSubmit={handleSubmit}>
+					<form className='flex flex-col justify-center items-center space-y-3 w-full'>
 						<div className='inputBox w-3/4'>
 							<div className='px-2'>
 								<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 4H4v2h16V4zm1 10v-2l-1-5H4l-1 5v2h1v6h10v-6h4v6h2v-6h1zm-9 4H6v-4h6v4z" fill="#666"/></svg>
@@ -100,7 +114,12 @@ export default function Signup() {
 							</div>
 							<input required placeholder='Address' onChange={(e)=>setAddress(e.target.value)} type="text" />
 						</div>
-						<input type="submit" className='button button-purple bg-[#ed71af] w-32' value="Register"/>
+						<button type="submit" disabled={loading} className='button button-purple bg-[#ed71af] w-32' onClick={handleSubmit}>
+						{loading ? 
+								<CircularProgress size="1rem" color="primary" />:
+								<>Register</>
+							}
+							</button>
 					</form>
 				</div>
 				<div className="font-bold text-sm mt-5 cursor-pointer" onClick={()=>navigate('/')}>
