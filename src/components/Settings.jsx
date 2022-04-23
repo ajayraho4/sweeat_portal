@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
-import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
@@ -54,7 +53,6 @@ export default function Settings() {
 				<div className="flex w-full justify-between items-center space-x-2">
 					<TextField sx={{display:'none'}} disabled />
 					<TextField onChange={(e)=>{setStoreTagline(e.target.value)}} className="w-full" defaultValue={context.data.tagline} label="Store Tagline" />
-					<TextField className="w-full" disabled defaultValue={context.data.store_code} label="Store Code" />
 					<Tooltip title="Offer food delivery to customers">
 						<Switch checked={storeDelivery} onChange={(e)=>{setStoreDelivery(e.target.checked)}} color="warning" /></Tooltip> Delivery
 				</div>
@@ -70,7 +68,7 @@ export default function Settings() {
 			 </Box>
 		</Box>
 		<ChangePasswordDialog open={openPw} onClose={handleClosePw} />
-		<ConfirmationDialog head="Suspend Service Temporarily" body={"This would temporarily suspend our services for your store. Your store will be marked closed and won\'t appear in any search results or recommendations list for users. But your data will remain intact in our databases. Agree to continue?"} open={openSus} onClose={handleCloseSus} />
+		<ConfirmationDialog head="Suspend Service Temporarily" body={"This would temporarily suspend our services for your store. Your store will be marked closed and won't appear in any search results or recommendations list for users. But your data will remain intact in our databases. Agree to continue?"} open={openSus} onClose={handleCloseSus} />
 		<ConfirmationDialog head="Request Account Deletion" body={"This queues your request to permanently discontinue our services for your store. Your account would be removed from all our databases and platforms. Once agreed, this action cannot be undone. Agree to continue?"} open={openRDel} onClose={handleCloseRDel} />
 		</>
 	);

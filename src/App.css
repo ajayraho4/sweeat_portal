@@ -44,7 +44,7 @@ body::-webkit-scrollbar-thumb {
   }
   .button {
     border-radius: 30px;
-    @apply px-5 py-2 drop-shadow-sm border-2 transition duration-100 hover:drop-shadow-md cursor-pointer;
+    @apply text-white px-5 py-2 drop-shadow-sm border-2 transition duration-100 hover:drop-shadow-md cursor-pointer;
   }
   .button-purple {
     @apply bg-[#c997c6] text-white text-lg font-bold;

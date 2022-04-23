@@ -19,7 +19,6 @@ export default function Login() {
 					context.data = {
 						'store_fid': docSnap.docs[0].id,
 						'store_id': docSnap.docs[0].data().store_id,
-						'store_code': docSnap.docs[0].data().store_code,
 						'location': docSnap.docs[0].data().location,
 						'name': docSnap.docs[0].data().name,
 						'store_rating': docSnap.docs[0].data().store_rating,
