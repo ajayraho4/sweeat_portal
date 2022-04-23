@@ -34,7 +34,10 @@ export default function Store() {
 	};
 	return (
 		<>
-		<div className='flex flex-col'>
+		<div className="h-screen w-full absolute top-0 left-0 bg-gray-500 flex items-center text-center justify-center md:hidden">
+			<h1 className="text-5xl font-bold text-white">Use of bigger screen is recommended.</h1>
+		</div>
+		<div className='hidden md:flex flex-col'>
 			<header className="flex pt-3 md:pt-6 w-full" style={{ backgroundImage: `url("../headerFlip.png")` }}>
 				<h1 className='flex justify-end w-full text-3xl md:text-5xl font-bold mr-7 pl-3 md:pl-8'>Sweeat</h1>
 			</header>
