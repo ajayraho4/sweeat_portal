@@ -58,6 +58,7 @@ export default function Login() {
             tagline: docSnap.docs[0].data().tagline,
             delivery: docSnap.docs[0].data().delivery,
             rating: docSnap.docs[0].data().store_rating,
+            address: docSnap.docs[0].data().address,
           };
           navigate("/store/");
         } else {
