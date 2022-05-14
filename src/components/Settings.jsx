@@ -21,7 +21,7 @@ export default function Settings() {
   const [editing, setEditing] = useState(false)
   const [storeName, setStoreName] = useState(context.data.name)
   const [storeAdminEmail, setStoreAdminEmail] = useState(context.data.adminEmail)
-  const [storeAddress, setStoreAddress] = useState("")
+  const [storeAddress, setStoreAddress] = useState(context.data.address)
   const [storeTagline, setStoreTagline] = useState(context.data.tagline)
   const [storeDelivery, setStoreDelivery] = useState(context.data.delivery)
 	const handleClickOpenPw=()=>{setOpenPw(true)};
@@ -32,7 +32,7 @@ export default function Settings() {
   const handleCloseRDel=()=>{setOpenRDel(false)};
  
   useEffect(()=>{
-  	if(storeName!=context.data.name||storeAdminEmail!=context.data.adminEmail||storeTagline!=context.data.tagline||storeDelivery!=context.data.delivery){
+  	if(storeName!=context.data.name||storeAdminEmail!=context.data.adminEmail||storeAddress!=context.data.address||storeTagline!=context.data.tagline||storeDelivery!=context.data.delivery){
   		setEditing(true)
   	} else {
 			setEditing(false)
@@ -49,7 +49,7 @@ export default function Settings() {
 					<TextField className="w-full" onChange={(e)=>{setStoreName(e.target.value)}} value={storeName} defaultValue={context.data.name} label="Store Name" />
 					<TextField className="w-full" onChange={(e)=>{setStoreAdminEmail(e.target.value)}} defaultValue={context.data.adminEmail} type="email" label="Store Admin Email" />
 				</div>
-				<TextField onChange={(e)=>{setStoreAddress(e.target.value)}} multiline rows={3} defaultValue="Default Value" label="Store Address" />
+				<TextField onChange={(e)=>{setStoreAddress(e.target.value)}} multiline rows={3} defaultValue={context.data.address} label="Store Address" />
 				<div className="flex w-full justify-between items-center space-x-2">
 					<TextField sx={{display:'none'}} disabled />
 					<TextField onChange={(e)=>{setStoreTagline(e.target.value)}} className="w-full" defaultValue={context.data.tagline} label="Store Tagline" />
